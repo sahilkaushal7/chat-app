@@ -1,16 +1,21 @@
 import * as React from "react";
+
 import {
-  ConversationsContextType,
   Conversation,
-  Recipient,
+  ConversationsContextType,
   Message,
+  Recipient,
 } from "../types/conversations";
+
+import Snackbar from "@mui/material/Snackbar";
+import { UserStatus } from "../types/users";
+import { useContacts } from "./ContactsProvider";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { useSocket } from "./SocketProvider";
 
 function arrayEquality(a: Recipient[], b: Recipient[]) {
   const aIds = a.map(({ id }) => id);
-  const bIds = b.map(({ id }) => id)
+  const bIds = b.map(({ id }) => id);
   if (aIds.length !== bIds.length) return false;
 
   aIds.sort();
@@ -26,17 +31,22 @@ export const ConversationsContext =
 
 interface IConversationsProvider {
   children: React.ReactNode;
-  id: string;
 }
 
 export const ConversationsProvider: React.FC<IConversationsProvider> = ({
   children,
-  id,
 }) => {
+  const [snackbarOpen, setSnackbarOpen] = React.useState({
+    open: false,
+    userName: "",
+    status: "",
+  });
+  const { saveContact } = useContacts();
   const [conversations, setConversations] = useLocalStorage(
     "conversations",
     [] as Conversation[]
   );
+  const { contacts } = useContacts();
   const [selectedConversation, setSelectedConversation] =
     React.useState<Conversation>({} as Conversation);
   const socket = useSocket();
@@ -71,10 +81,9 @@ export const ConversationsProvider: React.FC<IConversationsProvider> = ({
         setConversations([...conversations, newConv]);
       }
     },
-    [conversations, setConversations]
+    [conversations, saveContact, setConversations]
   );
   React.useEffect(() => {
-    console.log("here");
     if (socket == null) return;
 
     socket.on("receive-message", addMessageToConversation);
@@ -87,21 +96,59 @@ export const ConversationsProvider: React.FC<IConversationsProvider> = ({
     addMessageToConversation({ recipients, message });
   };
 
-  const createConversation = (recipients: Recipient[]) => {
-    setConversations([...conversations, { recipients, messages: [] }]);
-  };
+  React.useEffect(() => {
+    if (socket == null) return;
+
+    socket.on(
+      "status-update",
+      ({ status, name }: { id: string; status: string; name: string }) => {
+        setSnackbarOpen({
+          open: true,
+          userName: name,
+          status,
+        });
+        setTimeout(() => {
+          setSnackbarOpen((prev) => ({
+            ...prev,
+            open: false,
+          }));
+        }, 3000);
+      }
+    );
+
+    return () => socket.off("receive-message");
+  }, [socket, addMessageToConversation]);
+
+  const changeStatus = React.useCallback(
+    (status: string) => {
+      const contactsId = contacts.map(({ id }) => id);
+      socket.emit("change-status", { recipients: contactsId, status });
+    },
+    [contacts, socket]
+  );
+
+  const createConversation = React.useCallback(
+    (recipients: Recipient[]) => {
+      setConversations([...conversations, { recipients, messages: [] }]);
+    },
+    [conversations, setConversations]
+  );
 
   const value = {
-    id,
     conversations,
     selectedConversation,
     createConversation,
     sendMessage,
     setSelectedConversation,
+    changeStatus,
   };
 
   return (
     <ConversationsContext.Provider value={value}>
+      <Snackbar
+        open={snackbarOpen.open}
+        message={`${snackbarOpen.userName} went ${snackbarOpen.status}`}
+      />
       {children}
     </ConversationsContext.Provider>
   );

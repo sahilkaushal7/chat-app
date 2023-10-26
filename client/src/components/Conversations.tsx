@@ -1,32 +1,39 @@
 import * as React from "react";
+
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import { Conversation } from "../types/conversations";
+import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import Divider from "@mui/material/Divider";
-import ListItemAvatar from "@mui/material/ListItemAvatar";
-import Avatar from "@mui/material/Avatar";
-import { useConversations } from "../contexts/ConversationsProvider";
-import IconButton from "@mui/material/IconButton";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import NewConversationModal from "./Modals/NewConversationModal";
+import SendIcon from "@mui/icons-material/Send";
 import TextField from "@mui/material/TextField";
-import Box from "@mui/material/Box";
-import { Conversation } from "../types/conversations";
-import { Send } from "@mui/icons-material";
+import { Typography } from "@mui/material";
+import { useConversations } from "../contexts/ConversationsProvider";
 
 enum View {
   CONVERSATIONS = "conversations",
   MESSAGES = "messages",
 }
 
-const Conversations: React.FC = () => {
-  const [view, setView] = React.useState(View.CONVERSATIONS);
+interface IConversations {
+  id: string;
+  name: string;
+}
 
+const Conversations: React.FC<IConversations> = ({ id, name }) => {
+  const [view, setView] = React.useState(View.CONVERSATIONS);
+  const lastMessageRef = React.useRef<HTMLDivElement>(null);
   const [text, setText] = React.useState("");
   const {
-    id,
     conversations,
     selectedConversation,
     sendMessage,
@@ -39,66 +46,87 @@ const Conversations: React.FC = () => {
 
   const handleConversationClose = () => {
     setView(View.CONVERSATIONS);
-  };
-
-  const sendNewMessage = () => {
-    sendMessage(selectedConversation.recipients, { message: text, userId: id });
     setText("");
   };
 
+  const sendNewMessage = () => {
+    sendMessage(selectedConversation.recipients, {
+      message: text,
+      userId: id,
+      userName: name,
+    });
+    setText("");
+  };
+
+  React.useEffect(() => {
+    lastMessageRef?.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedConversation?.messages]);
+
   return view === View.CONVERSATIONS ? (
     <List>
-      {conversations.map((conversation, index) => {
-        const labelId = `checkbox-list-label-${index}`;
-
-        return (
-          <ListItem
-            key={labelId}
-            disablePadding
-            onClick={() => openConversation(conversation)}
-          >
-            <ListItemButton role={undefined} dense>
-              <ListItemIcon>
-                <AccountCircleIcon />
-              </ListItemIcon>
-              <ListItemText
-                id={labelId}
-                primary={""}
-                secondary={
-                  conversation.messages?.[0]?.message || "No Last Message"
-                }
-              />
-            </ListItemButton>
-          </ListItem>
-        );
-      })}
+      {conversations.length ? (
+        conversations.map((conversation, index) => {
+          const labelId = `checkbox-list-label-${index}`;
+          const lastSender = conversation.messages.length
+            ? conversation.messages?.[conversation.messages.length - 1]?.userId === id
+              ? "You"
+              : conversation.messages?.[conversation.messages.length - 1]?.userName
+            : conversation.recipients.map(({ name }) => name).join(", ");
+          const lastMessage =
+            conversation.messages?.[conversation.messages.length - 1]
+              ?.message || "No Last Message";
+          return (
+            <ListItem
+              key={labelId}
+              disablePadding
+              onClick={() => openConversation(conversation)}
+            >
+              <ListItemButton role={undefined} dense>
+                <ListItemIcon>
+                  <AccountCircleIcon />
+                </ListItemIcon>
+                <ListItemText
+                  id={labelId}
+                  primary={lastSender}
+                  secondary={lastMessage}
+                />
+              </ListItemButton>
+            </ListItem>
+          );
+        })
+      ) : (
+        <Box textAlign="center">
+          <Typography marginBottom={2}>No conversations created yet</Typography>
+          <NewConversationModal />
+        </Box>
+      )}
     </List>
   ) : (
-    <Box>
-      <List
-        sx={{ bgcolor: "background.paper" }}
-        subheader={
-          <IconButton sx={{ m: 1 }} onClick={handleConversationClose}>
-            <ChevronLeftIcon />
-          </IconButton>
-        }
-      >
-        {selectedConversation.messages.map((message) => (
-          <>
-            <ListItem alignItems="flex-start">
+    <Box display="flex" flexDirection="column" overflow="auto" flex="1">
+      <List sx={{ bgcolor: "background.paper", overflow: "auto", flex: "1" }}>
+        {selectedConversation.messages.map((message, index) => (
+          <React.Fragment key={index}>
+            <ListItem dir={message.userId === id ? "ltr" : "rtl"}>
               <ListItemAvatar>
                 <Avatar alt={message.userId} />
               </ListItemAvatar>
               <ListItemText
-                primary={message.message}
-                secondary={message.userId === id ? "You" : "Someone"}
+                sx={{ textAlign: message.userId === id ? "left" : "right" }}
+                primary={message.userId === id ? "You" : message.userName}
+                secondary={message.message}
               />
+
+              {selectedConversation.messages.length - 1 === index && (
+                <div ref={lastMessageRef} />
+              )}
             </ListItem>
-            <Divider variant="inset" component="li" />
-          </>
+            {selectedConversation.messages.length - 1 > index && (
+              <Divider variant="fullWidth" component="li" />
+            )}
+          </React.Fragment>
         ))}
       </List>
-      <Box>
+      <Box padding={2}>
         <TextField
           id="outlined-textarea"
           placeholder="Enter your message"
@@ -107,15 +135,29 @@ const Conversations: React.FC = () => {
           focused
           value={text}
           onChange={(e) => setText(e.target.value)}
-          sx={{ p: 2 }}
           fullWidth
         />
-        <IconButton
-          sx={{ alignSelf: "flex-end" }}
-          onClick={() => sendNewMessage()}
+        <Box
+          marginTop={2}
+          display="flex"
+          flexDirection="row"
+          justifyContent="space-between"
         >
-          <Send />
-        </IconButton>
+          <Button
+            variant="contained"
+            startIcon={<ChevronLeftIcon />}
+            onClick={handleConversationClose}
+          >
+            Go Back
+          </Button>
+          <Button
+            variant="contained"
+            endIcon={<SendIcon />}
+            onClick={sendNewMessage}
+          >
+            Send
+          </Button>
+        </Box>
       </Box>
     </Box>
   );

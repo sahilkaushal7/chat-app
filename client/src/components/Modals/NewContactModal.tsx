@@ -1,11 +1,12 @@
 import * as React from "react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Grid from "@mui/material/Grid";
-import Box from "@mui/material/Box";
-import { User } from "../types/users";
+
 import BaseModal from "./BaseModal";
-import { useContacts } from "../contexts/ContactsProvider";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
+import TextField from "@mui/material/TextField";
+import { User } from "../../types/users";
+import { useContacts } from "../../contexts/ContactsProvider";
 
 const NewContactModal: React.FC = () => {
   const [user, setUser] = React.useState<User>({} as User);

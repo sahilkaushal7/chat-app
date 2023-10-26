@@ -1,33 +1,31 @@
 import * as React from "react";
-import Login from "./components/Login";
-import useLocalStorage from "./hooks/useLocalStorage";
-import Dashboard from "./components/Dashboard";
-import { User } from "./types/users";
+
 import { ContactsProvider } from "./contexts/ContactsProvider";
 import { ConversationsProvider } from "./contexts/ConversationsProvider";
+import Dashboard from "./components/Dashboard";
+import Login from "./components/Login";
 import { SocketProvider } from "./contexts/SocketProvider";
+import { User } from "./types/users";
+import useLocalStorage from "./hooks/useLocalStorage";
 
 const App: React.FC = () => {
-  const [{ id, name }, setUser] = useLocalStorage<User>("id", {
-    id: "",
-    name: "",
-  } as User);
+  const [{ id, name }, setUser] = useLocalStorage<User>("id", {} as User);
 
   const onUserSubmit = (newUser: User) => {
     setUser(newUser);
   };
 
   const dashboard = (
-    <SocketProvider id={id}>
+    <SocketProvider id={id} name={name}>
       <ContactsProvider>
-        <ConversationsProvider id={id}>
-          <Dashboard id={id} />
+        <ConversationsProvider>
+          <Dashboard id={id} name={name} />
         </ConversationsProvider>
       </ContactsProvider>
     </SocketProvider>
   );
 
-  return <div>{name ? dashboard : <Login onUserSubmit={onUserSubmit} />}</div>;
+  return name ? dashboard : <Login onUserSubmit={onUserSubmit} />;
 };
 
 export default App;

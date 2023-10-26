@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import { ContactsContextType } from "../types/contacts";
 import { User } from "../types/users";
 import useLocalStorage from "../hooks/useLocalStorage";
@@ -16,13 +17,8 @@ export const ContactsProvider: React.FC<IContactProvider> = ({ children }) => {
   const saveContact = (contact: User) => {
     setContacts([...contacts, contact]);
   };
-  const deleteContact = (contactId: string) => {
-    const updatedContacts = contacts.filter(contact => contact.id !== contactId);
-    console.log(contactId, contacts, updatedContacts);
-    setContacts(updatedContacts);
-  }
   return (
-    <ContactsContext.Provider value={{ contacts, saveContact, deleteContact }}>
+    <ContactsContext.Provider value={{ contacts, saveContact }}>
       {children}
     </ContactsContext.Provider>
   );

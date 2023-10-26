@@ -3,10 +3,19 @@ export enum Tab {
   CONTACTS = "contacts",
 }
 
+export type UserDetails = {
+  id: string;
+  name: string;
+}
+
 export type TabConfig = {
   name: string;
-  Component: React.FC;
+  Component: React.FC<UserDetails>;
   ButtonModal: React.FC;
   Icon: React.FC;
   id: Tab;
+  props: {
+    id: string;
+    name: string;
+  }
 };

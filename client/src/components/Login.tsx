@@ -8,11 +8,11 @@ import Box from '@mui/material/Box'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import Typography from '@mui/material/Typography'
 import Container from '@mui/material/Container'
-import { User } from '../types/users'
+import { User, UserStatus } from '../types/users'
 import { v4 } from 'uuid';
 
 interface ILogin {
-  onUserSubmit: (user: { id: string, name: string }) => void;
+  onUserSubmit: (user: User) => void;
 }
 
 const Login: React.FC<ILogin> = ({
@@ -24,7 +24,8 @@ const Login: React.FC<ILogin> = ({
   React.useEffect(() => {
     setUser({
       id: v4(),
-      name: ''
+      name: '',
+      status: UserStatus.OFFLINE
     })
   }, []);
 
@@ -68,7 +69,6 @@ const Login: React.FC<ILogin> = ({
             autoComplete="id"
             autoFocus
             value={user.id}
-            disabled
             onChange={(e) => onChange(e, 'id')}
           />
           <TextField

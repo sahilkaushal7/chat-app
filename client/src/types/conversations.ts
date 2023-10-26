@@ -1,6 +1,9 @@
+import { UserStatus } from "./users";
+
 export type Message = {
   message: string;
   userId: string;
+  userName: string;
 };
 
 export type Recipient = {
@@ -14,10 +17,10 @@ export type Conversation = {
 };
 
 export type ConversationsContextType = {
-  id: string;
   conversations: Conversation[];
   selectedConversation: Conversation;
   createConversation: (recipients: Recipient[]) => void;
   sendMessage: (recipients: Recipient[], message: Message) => void;
   setSelectedConversation: (conversation: Conversation) => void;
+  changeStatus: (status: UserStatus) => void;
 };
