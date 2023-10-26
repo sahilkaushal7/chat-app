@@ -8,7 +8,6 @@ import {
 } from "../types/conversations";
 
 import Snackbar from "@mui/material/Snackbar";
-import { UserStatus } from "../types/users";
 import { useContacts } from "./ContactsProvider";
 import useLocalStorage from "../hooks/useLocalStorage";
 import { useSocket } from "./SocketProvider";
@@ -41,7 +40,6 @@ export const ConversationsProvider: React.FC<IConversationsProvider> = ({
     userName: "",
     status: "",
   });
-  const { saveContact } = useContacts();
   const [conversations, setConversations] = useLocalStorage(
     "conversations",
     [] as Conversation[]
@@ -81,7 +79,7 @@ export const ConversationsProvider: React.FC<IConversationsProvider> = ({
         setConversations([...conversations, newConv]);
       }
     },
-    [conversations, saveContact, setConversations]
+    [conversations, setConversations]
   );
   React.useEffect(() => {
     if (socket == null) return;
