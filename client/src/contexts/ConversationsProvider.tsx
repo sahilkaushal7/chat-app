@@ -110,7 +110,7 @@ export const ConversationsProvider: React.FC<IConversationsProvider> = ({
             ...prev,
             open: false,
           }));
-        }, 3000);
+        }, 5000);
       }
     );
 

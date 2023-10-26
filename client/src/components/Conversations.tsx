@@ -68,9 +68,11 @@ const Conversations: React.FC<IConversations> = ({ id, name }) => {
         conversations.map((conversation, index) => {
           const labelId = `checkbox-list-label-${index}`;
           const lastSender = conversation.messages.length
-            ? conversation.messages?.[conversation.messages.length - 1]?.userId === id
+            ? conversation.messages?.[conversation.messages.length - 1]
+                ?.userId === id
               ? "You"
-              : conversation.messages?.[conversation.messages.length - 1]?.userName
+              : conversation.messages?.[conversation.messages.length - 1]
+                  ?.userName
             : conversation.recipients.map(({ name }) => name).join(", ");
           const lastMessage =
             conversation.messages?.[conversation.messages.length - 1]
@@ -106,12 +108,20 @@ const Conversations: React.FC<IConversations> = ({ id, name }) => {
       <List sx={{ bgcolor: "background.paper", overflow: "auto", flex: "1" }}>
         {selectedConversation.messages.map((message, index) => (
           <React.Fragment key={index}>
-            <ListItem dir={message.userId === id ? "ltr" : "rtl"}>
+            <ListItem
+              sx={{
+                flexDirection: message.userId === id ? "row" : "row-reverse",
+              }}
+            >
               <ListItemAvatar>
                 <Avatar alt={message.userId} />
               </ListItemAvatar>
               <ListItemText
-                sx={{ textAlign: message.userId === id ? "left" : "right" }}
+                sx={
+                  message.userId === id
+                    ? { textAlign: "left" }
+                    : { textAlign: "right", mr: 2 }
+                }
                 primary={message.userId === id ? "You" : message.userName}
                 secondary={message.message}
               />
